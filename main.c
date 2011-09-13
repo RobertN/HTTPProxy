@@ -10,16 +10,21 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <sys/queue.h>
 
 #include "proxy.h"
 
 #define PORT "8080"
 
-void http_request_init(http_request *req)
+void http_request_init(http_request **req)
 {
-	req = (http_request*)malloc(sizeof(http_request));
-	req->method = -1; 
-	req->search_path = NULL; 
+	*req = (http_request*)malloc(sizeof(http_request));
+
+	http_request *request = *req; 
+	request->method = 0; 
+	request->search_path = NULL; 
+
+	TAILQ_INIT(&request->metadata_head); 
 }
 
 void http_request_destroy(http_request *req)
@@ -28,11 +33,18 @@ void http_request_destroy(http_request *req)
 
 void http_request_print(http_request *req)
 {
-	printf("HTTP_REQUEST: \n"); 
-	printf("method: %s\n", 
+	printf("[HTTP_REQUEST] \n"); 
+	printf("method:\t\t%s\n", 
 		http_methods[req->method]);
-	printf("search path: %s\n", 
+	printf("path:\t\t%s\n", 
 		req->search_path); 
+
+	http_metadata_item *item; 
+	TAILQ_FOREACH(item, &req->metadata_head, entries) {
+		printf("%s:\t%s\n", item->key, item->value); 
+	}
+
+	printf("\n"); 
 }
 
 
@@ -51,7 +63,7 @@ void http_parse_method(http_request *result, char *line)
 		}
 	}
 
-	if(found)
+	if(!found)
 	{
 		return; 
 	}
@@ -61,6 +73,20 @@ void http_parse_method(http_request *result, char *line)
 	// get a GET request?)
 	str_part = strtok(NULL, " "); 
 	result->search_path = strdup(str_part); 
+
+	// TODO: Retrieve the HTTP version
+}
+
+void http_parse_metadata(http_request *result, char *line)
+{
+	char *key = strdup(strtok(line, ":")); 
+	char *value = strdup(strtok(NULL, "\r")); 
+
+	http_metadata_item *item = (http_metadata_item*)malloc(sizeof(http_metadata_item)); 
+	item->key = key; 
+	item->value = value; 
+
+	TAILQ_INSERT_TAIL(&result->metadata_head, item, entries); 
 }
 
 char *read_line(int sockfd)
@@ -97,17 +123,26 @@ char *read_line(int sockfd)
 void handle_client(int sockfd)
 {
 	char *line; 
-	char *request = NULL;
 	http_request *req; 
-	http_request_init(req); 
+	http_request_init(&req); 
 
-	printf("reading line\n"); 
 	line = read_line(sockfd); 
-	printf("read line: %s\n", line); 
-
-	printf("parsing method\n"); 
 	http_parse_method(req, line); 
-	printf("done parsing method\n"); 
+
+	while(1)
+	{
+		line = read_line(sockfd); 
+		if(line[0] == '\r' && line[1] == '\n') 
+		{
+			// We received the end of the HTTP header 
+			break; 
+		}
+
+		// TODO: Save the headers sent by the client in
+		// a linked list or something.
+
+		http_parse_metadata(req, line); 
+	}
 
 	http_request_print(req); 
 }
@@ -120,7 +155,6 @@ void start_server(unsigned int port)
 	struct addrinfo hints, *servinfo, *p; 
 	struct sockaddr_storage their_addr; 
 	socklen_t sin_size; 
-	struct sigaction sa; 
 	int rv; 
 	int yes = 1; 
 	
@@ -191,11 +225,7 @@ void start_server(unsigned int port)
 		pid_t child_pid = fork();
 		if(!child_pid) 
 		{
-			printf("Forked\n"); 
-
-			printf("handling client\n"); 
 			handle_client(new_fd); 
-			printf("done handling client\n"); 
 
 			close(new_fd); 
 			exit(0); 
