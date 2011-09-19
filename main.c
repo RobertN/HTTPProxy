@@ -83,8 +83,13 @@ void http_parse_method(http_request *result, char *line)
 void http_parse_metadata(http_request *result, char *line)
 {
 	char *key = strdup(strtok(line, ":")); 
-	line++;
+
 	char *value = strdup(strtok(NULL, "\r")); 
+	
+	// remove whitespaces :)
+	char *p = value; 
+	while(*p == ' ') p++; 
+	value = p; 
 
 	http_metadata_item *item = (http_metadata_item*)malloc(sizeof(http_metadata_item)); 
 	item->key = key; 
@@ -139,7 +144,7 @@ int http_request_send(http_request *req)
 	TAILQ_FOREACH(item, &req->metadata_head, entries) {
 		if(strcmp(item->key, "Host") == 0)
 		{
-			printf("Host: %s\n", item->value); 
+			printf("Host: \"%s\"\n", item->value); 
 			host = item->value;
 			break; 
 		}
