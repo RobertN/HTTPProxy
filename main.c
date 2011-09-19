@@ -77,9 +77,11 @@ void http_parse_method(http_request *result, char *line)
 	// TODO: Retrieve the HTTP version
 }
 
+// Content-Byte: 101
 void http_parse_metadata(http_request *result, char *line)
 {
 	char *key = strdup(strtok(line, ":")); 
+	line++;
 	char *value = strdup(strtok(NULL, "\r")); 
 
 	http_metadata_item *item = (http_metadata_item*)malloc(sizeof(http_metadata_item)); 
@@ -89,6 +91,7 @@ void http_parse_metadata(http_request *result, char *line)
 	TAILQ_INSERT_TAIL(&result->metadata_head, item, entries); 
 }
 
+// TODO: Test all the edge cases
 char *read_line(int sockfd)
 {
 	int buffer_size = 2; 
@@ -112,12 +115,68 @@ char *read_line(int sockfd)
 		if(counter == buffer_size)
 		{
 			buffer_size *= 2; 
+
+			// TODO: should probably allocate +1 for the null terminator,
+			// but not sure.
 			line = (char*)realloc(line, sizeof(char)*buffer_size); 
 		}
 
 	}
 
 	return NULL;
+}
+
+int http_request_send(http_request *req)
+{
+	struct addrinfo hints, *servinfo, *p; 
+	int sockfd; 
+	int rv; 
+	const char *host;
+	// retrieve the hostname from the http request
+	http_metadata_item *item; 
+	TAILQ_FOREACH(item, &req->metadata_head, entries) {
+		if(strcmp(item->key, "Host") == 0)
+		{
+			printf("Host: %s\n", item->value); 
+			host = item->value;
+			break; 
+		}
+	}
+
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+
+	if((rv = getaddrinfo(host, "80", &hints, &servinfo)) !=0 ) 
+	{
+		printf("Failed to find name\n"); 
+		return 1;
+	}
+  // loop through all the results and connect to the first we can
+	for(p = servinfo; p != NULL; p = p->ai_next) {
+		if ((sockfd = socket(p->ai_family, p->ai_socktype,
+						p->ai_protocol)) == -1) {
+			perror("client: socket");
+			continue;
+		}
+
+		if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+			close(sockfd);
+			perror("client: connect");
+			continue;
+		}
+
+		break;
+	}
+
+	if (p == NULL) {
+		fprintf(stderr, "client: failed to connect\n");
+		return 2;
+	}
+
+	printf("connected to host\n");
+
+	return 0;
 }
 
 void handle_client(int sockfd)
@@ -143,6 +202,9 @@ void handle_client(int sockfd)
 
 		http_parse_metadata(req, line); 
 	}
+
+	// TODO: Send the request to the server 
+	http_request_send(req); 
 
 	http_request_print(req); 
 }
