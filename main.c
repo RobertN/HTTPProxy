@@ -133,6 +133,10 @@ char *read_line(int sockfd)
 	return NULL;
 }
 
+void send_to_client() 
+{
+}
+
 int http_request_send(http_request *req)
 {
 	struct addrinfo hints, *servinfo, *p; 
@@ -183,6 +187,32 @@ int http_request_send(http_request *req)
 
 	printf("connected to host\n");
 
+	char request_buffer[] = "GET /index.html HTTP/1.1\r\nHost: 85.8.2.230\r\n\r\n"; 
+	if(send(sockfd, request_buffer, strlen(request_buffer), 0) == -1)
+	{
+		perror("send"); 
+		return 1; 
+	}
+
+	printf("Sent data\n"); 
+	
+	char *line; 
+	while(1)
+	{
+		line = read_line(sockfd); 
+		if(line[0] == '\r' && line[1] == '\n') 
+		{
+			// We received the end of the HTTP header 
+			break; 
+		}
+		printf("%s", line); 
+		free(line); 
+	}
+
+	send_to_client(); 
+
+	close(sockfd); 
+
 	return 0;
 }
 
@@ -208,6 +238,8 @@ void handle_client(int sockfd)
 		// a linked list or something.
 
 		http_parse_metadata(req, line); 
+
+		free(line); 
 	}
 
 	// TODO: Send the request to the server 
