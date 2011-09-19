@@ -16,6 +16,8 @@
 
 #define PORT "8080"
 
+
+
 void http_request_init(http_request **req)
 {
 	*req = (http_request*)malloc(sizeof(http_request));
