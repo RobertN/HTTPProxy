@@ -41,9 +41,10 @@ void http_request_print(http_request *req)
 	printf("path:\t\t%s\n", 
 		req->search_path); 
 
-	http_metadata_item *item; 
+	printf("[Metadata] \n"); 
+	struct http_metadata_item *item; 
 	TAILQ_FOREACH(item, &req->metadata_head, entries) {
-		printf("%s:\t%s\n", item->key, item->value); 
+		printf("%s: %s\n", item->key, item->value); 
 	}
 
 	printf("\n"); 
@@ -340,3 +341,4 @@ int main(int argc, char *argv[])
 	start_server(8080); 
 	return 0; 
 }
+
