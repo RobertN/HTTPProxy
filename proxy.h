@@ -1,19 +1,8 @@
 #ifndef PROXY_HH
 #define PROXY_HH
 
-const int http_methods_len = 9; 
-const char *http_methods[] = 
-	{
-		"OPTIONS", 
-		"GET", 
-		"HEAD", 
-		"POST", 
-		"PUT", 
-		"DELETE", 
-		"TRACE", 
-		"CONNECT",
-		"UNKNOWN"
-	}; 
+extern int http_methods_len; 
+extern const char *http_methods[];  
 
 enum http_methods_enum 
 	{
@@ -46,3 +35,4 @@ typedef struct
 
 
 #endif
+
