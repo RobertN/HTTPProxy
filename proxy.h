@@ -17,22 +17,21 @@ enum http_methods_enum
 		UNKNOWN
 	};
 
-typedef struct
+typedef struct http_request
 	{
 		enum http_methods_enum method; 
 		const char *search_path; 
 
-		TAILQ_HEAD(, tailq_entry) metadata_head; 
+		TAILQ_HEAD(METADATA_HEAD, http_metadata_item) metadata_head; 
 	} http_request;
 
-typedef struct
+typedef struct http_metadata_item
 	{ 
 		const char *key; 
 		const char *value; 
 		
-		TAILQ_ENTRY(tailq_entry) entries; 
+		TAILQ_ENTRY(http_metadata_item) entries; 
 	} http_metadata_item; 
 
 
 #endif
-
