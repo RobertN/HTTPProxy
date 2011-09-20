@@ -1,2 +1,3 @@
+FILES = main.c http_message.c
 all:
-	gcc main.c -o app
+	gcc $(FILES) -Wall -g -o app
