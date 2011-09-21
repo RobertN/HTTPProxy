@@ -15,10 +15,10 @@
 #include "proxy.h"
 
 /**
-	* Creates a TCP connection to the given host 
-	* and returns the socket. Returns -1 if something
-	* fails.
-	*/
+Creates a TCP connection to the given host 
+and returns the socket. Returns -1 if something
+fails.
+*/
 int http_connect(const char *host, const char *port)
 {
 	struct addrinfo hints, *servinfo, *p; 
@@ -60,19 +60,19 @@ int http_connect(const char *host, const char *port)
 }
 
 /**
-	* Read a HTTP header from the given socket and
-	* returns a http_request*. 
-	*/
+Read a HTTP header from the given socket and
+returns a http_request*. 
+*/
 http_request *http_read_header(int sockfd)
 {
 	return NULL;
 }
 
 /**
-	* Read as much data as possible from the given socket
-	* and returns it as a null terminated char pointer. Data 
-	* returned from this function must be freed somewhere else. 
-	*/
+Read as much data as possible from the given socket
+and returns it as a null terminated char pointer. Data 
+returned from this function must be freed somewhere else. 
+*/
 char *http_read_chunk(int sockfd)
 {
 	return NULL; 
