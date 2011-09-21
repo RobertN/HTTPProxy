@@ -12,6 +12,13 @@
 #include <signal.h>
 #include <sys/queue.h>
 
+#include "proxy.h"
+
+/**
+	* Creates a TCP connection to the given host 
+	* and returns the socket. Returns -1 if something
+	* fails.
+	*/
 int http_connect(const char *host, const char *port)
 {
 	struct addrinfo hints, *servinfo, *p; 
@@ -27,7 +34,7 @@ int http_connect(const char *host, const char *port)
 		return -1; 
 	}
 	
-  // loop through all the results and connect to the first we can
+	// loop through all the results and connect to the first we can
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 		if ((sockfd = socket(p->ai_family, p->ai_socktype,
 						p->ai_protocol)) == -1) {
@@ -50,4 +57,23 @@ int http_connect(const char *host, const char *port)
 	}
 
 	return sockfd;
+}
+
+/**
+	* Read a HTTP header from the given socket and
+	* returns a http_request*. 
+	*/
+http_request *http_read_header(int sockfd)
+{
+	return NULL;
+}
+
+/**
+	* Read as much data as possible from the given socket
+	* and returns it as a null terminated char pointer. Data 
+	* returned from this function must be freed somewhere else. 
+	*/
+char *http_read_chunk(int sockfd)
+{
+	return NULL; 
 }
