@@ -13,6 +13,7 @@
 #include <sys/queue.h>
 
 #include "proxy.h"
+#include "net.h"
 
 #define PORT "8080"
 
@@ -140,9 +141,7 @@ void send_to_client()
 
 int http_request_send(http_request *req)
 {
-	struct addrinfo hints, *servinfo, *p; 
 	int sockfd; 
-	int rv; 
 	const char *host;
 	// retrieve the hostname from the http request
 	http_metadata_item *item; 
@@ -155,35 +154,11 @@ int http_request_send(http_request *req)
 		}
 	}
 
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-
-	if((rv = getaddrinfo(host, "80", &hints, &servinfo)) !=0 ) 
+	sockfd = http_connect(host, "80");
+	if(sockfd == -1) 
 	{
-		printf("Failed to find name\n"); 
-		return 1;
-	}
-  // loop through all the results and connect to the first we can
-	for(p = servinfo; p != NULL; p = p->ai_next) {
-		if ((sockfd = socket(p->ai_family, p->ai_socktype,
-						p->ai_protocol)) == -1) {
-			perror("client: socket");
-			continue;
-		}
-
-		if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-			close(sockfd);
-			perror("client: connect");
-			continue;
-		}
-
-		break;
-	}
-
-	if (p == NULL) {
-		fprintf(stderr, "client: failed to connect\n");
-		return 2;
+		printf("Failed to connect to host\n");
+		return -1; 
 	}
 
 	printf("connected to host\n");
