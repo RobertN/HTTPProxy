@@ -136,8 +136,39 @@ char *read_line(int sockfd)
 	return NULL;
 }
 
-void send_to_client() 
+int send_to_client(int client_sockfd, char data[], int packages_size)
 {
+    // if packages_size is set to 0, then the function will try to send all data as one package.
+    if(packages_size < 1){
+        if(send(client_sockfd, data, strlen(data), 0) == -1)
+	    {
+		    perror("Couldn't send data to the client.");
+		    return -1;
+	    }
+    }
+    else
+    {
+        int p, length = strlen(data);
+        for(p = 0; p*packages_size < length; p = p + packages_size){
+            if(send(client_sockfd, (data + p*packages_size), packages_size, 0) == -1)
+	        {
+		        perror("Couldn't send any or just some data to the client.");
+		        return -1;
+            }
+        }
+        if (p*packages_size - length != 0)
+        {
+            if(send(client_sockfd, (data + (p-1)*packages_size), packages_size - length, 0) == -1)
+	        {
+		        perror("Couldn't send any or just some data to the client.");
+		        return -1;
+            }
+
+        }
+    }
+
+	printf("The data is sent to the client\n");
+    return 0;
 }
 
 int http_request_send(http_request *req)
@@ -185,7 +216,7 @@ int http_request_send(http_request *req)
 		free(line); 
 	}
 
-	send_to_client(); 
+	//send_to_client(); 
 
 	close(sockfd); 
 
