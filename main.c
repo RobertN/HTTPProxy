@@ -14,6 +14,7 @@
 
 #include "proxy.h"
 #include "net.h"
+#include "list.h"
 
 #define PORT "8080"
 
@@ -143,15 +144,14 @@ int http_request_send(http_request *req)
 {
 	int sockfd; 
 	const char *host;
+	
 	// retrieve the hostname from the http request
-	http_metadata_item *item; 
-	TAILQ_FOREACH(item, &req->metadata_head, entries) {
-		if(strcmp(item->key, "Host") == 0)
-		{
-			printf("Host: \"%s\"\n", item->value); 
-			host = item->value;
-			break; 
-		}
+	host = list_get_key(&req->metadata_head, "Host"); 
+	
+	if(host == NULL)
+	{
+		printf("Could not find the Host property in metadata\n");
+		return -1; 
 	}
 
 	sockfd = http_connect(host, "80");
