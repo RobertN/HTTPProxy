@@ -15,15 +15,25 @@
 #include <fcntl.h>
 
 #include "proxy.h"
+#include "list.h"
 
 /**
 Creates a TCP connection to the given host 
 and returns the socket. Returns -1 if something
 fails.
 */
-int http_connect(const char *host, const char *port)
+int http_connect(http_request *req) 
 {
 	LOG(LOG_TRACE, "Connecting to HTTP server\n");
+
+	const char *host = list_get_key(&req->metadata_head, "Host"); 
+	const char *port = "80"; 
+
+	if(host == NULL)
+	{
+		LOG(LOG_ERROR, "Could not find the Host property in the metadata\n");
+		return -1; 
+	}
 
 	struct addrinfo hints, *servinfo, *p; 
 	int sockfd, rv; 
@@ -124,6 +134,8 @@ char *http_read_chunk(int sockfd)
 		buf = realloc(buf, sizeof(char)*++current_size);
 		strncat(buf, &c, 1);
 	}
+
+	fcntl(sockfd, F_SETFL, flags);
 
 	return buf; 
 }

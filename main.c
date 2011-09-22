@@ -192,12 +192,11 @@ int http_request_send(int sockfd, http_request *req)
 			// We received the end of the HTTP header 
 			break; 
 		}
-		printf("%s", line); 
+
+		printf("line: %s\n", line);
+
 		free(line); 
 	}
-
-
-	close(sockfd); 
 
 	return 0;
 }
@@ -205,8 +204,7 @@ int http_request_send(int sockfd, http_request *req)
 void handle_client(int client_sockfd)
 {
 	char *line; 
-    int server_sockfd; 
-	const char *host;
+	int server_sockfd; 
 	http_request *req; 
 	http_request_init(&req); 
 
@@ -231,20 +229,11 @@ void handle_client(int client_sockfd)
 
 
 	
-	// retrieve the hostname from the http request
-	host = list_get_key(&req->metadata_head, "Host"); 
-	
-	if(host == NULL)
-	{
-		printf("Could not find the Host property in metadata\n");
-		return ; 
-	}
-
-	server_sockfd = http_connect(host, "80");
+	server_sockfd = http_connect(req);
 	if(server_sockfd == -1) 
 	{
 		printf("Failed to connect to host\n");
-		return ; 
+		return; 
 	}
 
 	printf("connected to host\n");
@@ -252,10 +241,11 @@ void handle_client(int client_sockfd)
 	// TODO: Send the request to the server 
 	http_request_send(server_sockfd, req); 
 	http_request_print(req);
-    char *temp = http_read_chunk(server_sockfd);
-    printf("\n\n%s\n", temp);
-    send_to_client(client_sockfd, temp, 0);
-    close(server_sockfd);
+
+	char *temp = http_read_chunk(server_sockfd);
+	printf("\n\n%s\n", temp);
+	send_to_client(client_sockfd, temp, 0);
+	close(server_sockfd);
 }
 
 void start_server(unsigned int port)
