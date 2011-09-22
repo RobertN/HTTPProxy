@@ -156,7 +156,7 @@ int send_to_client(int client_sockfd, char data[], int packages_size)
 		        return -1;
             }
         }
-        if (p*packages_size - length != 0)
+        if (p*packages_size != length)
         {
             if(send(client_sockfd, (data + (p-1)*packages_size), packages_size - length, 0) == -1)
 	        {
@@ -216,7 +216,6 @@ int http_request_send(http_request *req)
 		free(line); 
 	}
 
-	//send_to_client(); 
 
 	close(sockfd); 
 
@@ -243,11 +242,12 @@ void handle_client(int sockfd)
 
 		// TODO: Save the headers sent by the client in
 		// a linked list or something.
-
+        send_to_client(sockfd, line, 1);
 		http_parse_metadata(req, line); 
 
 		free(line); 
 	}
+
 
 	// TODO: Send the request to the server 
 	http_request_send(req); 
