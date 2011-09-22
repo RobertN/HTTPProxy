@@ -136,6 +136,33 @@ char *read_line(int sockfd)
 	return NULL;
 }
 
+int containing_forbidden_words(char str[]){
+
+    // Forbidden words
+    char *words[] = {"SpongeBob", "Britney Spears", "Paris Hilton", "Norrkӧping", "Norrk&ouml;ping"};
+    int hits[] = {0, 0, 0, 0, 0}; // Every forbidden word need to have a zero in this array to be able to count number of char hits.
+    int numb_words = 5; // Number of forbidden words
+
+    int str_length = strlen(str);
+    int c, w;   // Index for char in str, and index for word in words
+
+    // Search for forbidden words
+    for (c = 0; c < str_length; c++)
+    {
+        for (w = 0; w < numb_words; w++)
+        {
+            if (words[w][ hits[w] ] == str[c]){
+                if(++hits[w] == strlen(words[w]))
+                    return 1;
+            }
+            else
+                hits[w] = 0;
+        }
+    }
+
+    return 0;
+}
+
 int send_to_client(int client_sockfd, char data[], int packages_size)
 {
     // if packages_size is set to 0, then the function will try to send all data as one package.
