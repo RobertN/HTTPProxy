@@ -173,15 +173,31 @@ int send_to_client(int client_sockfd, char data[], int packages_size)
 
 int http_request_send(int sockfd, http_request *req)
 {
+	const char *search_path = req->search_path; 
+	//char request_buffer[] = "GET /index.html HTTP/1.1\r\nHost: 85.8.2.230\r\n\r\n"; 
 
-    char request_buffer[] = "GET /index.html HTTP/1.1\r\nHost: 85.8.2.230\r\n\r\n"; 
+	// construct the http request 
+	int size = strlen("GET ") + 1; 
+	char *request_buffer = malloc(sizeof(char)*size);
+	memset(request_buffer, '\0', sizeof(char)*size);
+	strncat(request_buffer, "GET ", 4);
+
+	size += strlen(search_path) + 1; 
+	request_buffer = realloc(request_buffer, size);
+	strncat(request_buffer, search_path, strlen(search_path));
+
+	size += strlen(" HTTP/1.0\r\n\r\n");
+	request_buffer = realloc(request_buffer, size); 
+	strncat(request_buffer, " HTTP/1.0\r\n\r\n", strlen(" HTTP/1.0\r\n\r\n"));
+
+	// send the http request to the web server 
 	if(send(sockfd, request_buffer, strlen(request_buffer), 0) == -1)
 	{
 		perror("send"); 
 		return 1; 
 	}
 
-	printf("Sent data\n"); 
+	LOG(LOG_TRACE, "Sent HTTP header to web server\n");
 	
 	return 0;
 }
@@ -221,7 +237,8 @@ void handle_client(int client_sockfd)
 		return; 
 	}
 
-	printf("connected to host\n");
+	//printf("connected to host\n");
+	LOG(LOG_TRACE, "Connected to host\n");
 
 	// TODO: Send the request to the server 
 	http_request_send(server_sockfd, req); 
