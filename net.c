@@ -79,8 +79,15 @@ http_request *http_read_header(int sockfd)
 
 	while(1) 
 	{
-		line = read_line 
+		line = read_line(sockfd); 
+		if(line[0] == '\r' && line[1] == '\n')
+		{
+			// We received the end of the HTTP header 
+			break; 
+
+		}
 	}
+
 */
 	return NULL;
 }
