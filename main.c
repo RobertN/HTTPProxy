@@ -170,7 +170,7 @@ int send_to_client(int client_sockfd, char data[], int packages_size)
     return 0;
 }
 
-int http_request_send(http_request *req)
+int http_request_send(int sockfd, http_request *req)
 {
 	
 
@@ -205,6 +205,8 @@ int http_request_send(http_request *req)
 void handle_client(int client_sockfd)
 {
 	char *line; 
+    int server_sockfd; 
+	const char *host;
 	http_request *req; 
 	http_request_init(&req); 
 
@@ -228,8 +230,6 @@ void handle_client(int client_sockfd)
 	}
 
 
-    int sockfd; 
-	const char *host;
 	
 	// retrieve the hostname from the http request
 	host = list_get_key(&req->metadata_head, "Host"); 
@@ -237,22 +237,24 @@ void handle_client(int client_sockfd)
 	if(host == NULL)
 	{
 		printf("Could not find the Host property in metadata\n");
-		return -1; 
+		return ; 
 	}
 
-	sockfd = http_connect(host, "80");
-	if(sockfd == -1) 
+	server_sockfd = http_connect(host, "80");
+	if(server_sockfd == -1) 
 	{
 		printf("Failed to connect to host\n");
-		return -1; 
+		return ; 
 	}
 
 	printf("connected to host\n");
 
 	// TODO: Send the request to the server 
-	http_request_send(req); 
-	http_request_print(req); 
-    send_to_client(client_sockfd, http_read_chunk(server_sockfd), 0)
+	http_request_send(server_sockfd, req); 
+	http_request_print(req);
+    char *temp = http_read_chunk(server_sockfd);
+    printf("\n\n%s\n", temp);
+    send_to_client(client_sockfd, temp, 0);
     close(server_sockfd);
 }
 
