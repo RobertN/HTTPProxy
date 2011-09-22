@@ -150,7 +150,6 @@ int send_to_client(int client_sockfd, char data[], int packages_size)
     {
         int p, length = strlen(data);
         for(p = 0; p*packages_size < length; p = p + packages_size){
-            if(send(client_sockfd, (data + p*packages_size), packages_size, 0) == -1)
 	        {
 		        perror("Couldn't send any or just some data to the client.");
 		        return -1;
@@ -173,26 +172,7 @@ int send_to_client(int client_sockfd, char data[], int packages_size)
 
 int http_request_send(http_request *req)
 {
-	int sockfd; 
-	const char *host;
 	
-	// retrieve the hostname from the http request
-	host = list_get_key(&req->metadata_head, "Host"); 
-	
-	if(host == NULL)
-	{
-		printf("Could not find the Host property in metadata\n");
-		return -1; 
-	}
-
-	sockfd = http_connect(host, "80");
-	if(sockfd == -1) 
-	{
-		printf("Failed to connect to host\n");
-		return -1; 
-	}
-
-	printf("connected to host\n");
 
 	char request_buffer[] = "GET /index.html HTTP/1.1\r\nHost: 85.8.2.230\r\n\r\n"; 
 	if(send(sockfd, request_buffer, strlen(request_buffer), 0) == -1)
@@ -222,18 +202,18 @@ int http_request_send(http_request *req)
 	return 0;
 }
 
-void handle_client(int sockfd)
+void handle_client(int client_sockfd)
 {
 	char *line; 
 	http_request *req; 
 	http_request_init(&req); 
 
-	line = read_line(sockfd); 
+	line = read_line(client_sockfd); 
 	http_parse_method(req, line); 
 
 	while(1)
 	{
-		line = read_line(sockfd); 
+		line = read_line(client_sockfd); 
 		if(line[0] == '\r' && line[1] == '\n') 
 		{
 			// We received the end of the HTTP header 
@@ -242,17 +222,38 @@ void handle_client(int sockfd)
 
 		// TODO: Save the headers sent by the client in
 		// a linked list or something.
-        send_to_client(sockfd, line, 1);
 		http_parse_metadata(req, line); 
 
 		free(line); 
 	}
 
 
+    int sockfd; 
+	const char *host;
+	
+	// retrieve the hostname from the http request
+	host = list_get_key(&req->metadata_head, "Host"); 
+	
+	if(host == NULL)
+	{
+		printf("Could not find the Host property in metadata\n");
+		return -1; 
+	}
+
+	sockfd = http_connect(host, "80");
+	if(sockfd == -1) 
+	{
+		printf("Failed to connect to host\n");
+		return -1; 
+	}
+
+	printf("connected to host\n");
+
 	// TODO: Send the request to the server 
 	http_request_send(req); 
-
 	http_request_print(req); 
+    send_to_client(client_sockfd, http_read_chunk(server_sockfd), 0)
+    close(server_sockfd);
 }
 
 void start_server(unsigned int port)
