@@ -139,8 +139,9 @@ char *read_line(int sockfd)
 int send_to_client(int client_sockfd, char data[], int packages_size)
 {
     // if packages_size is set to 0, then the function will try to send all data as one package.
+    int length = strlen(data);
     if(packages_size < 1){
-        if(send(client_sockfd, data, strlen(data), 0) == -1)
+        if(send(client_sockfd, data, length, 0) == -1)
 	    {
 		    perror("Couldn't send data to the client.");
 		    return -1;
@@ -148,33 +149,32 @@ int send_to_client(int client_sockfd, char data[], int packages_size)
     }
     else
     {
-        int p, length = strlen(data);
-        for(p = 0; p*packages_size < length; p = p + packages_size){
+        int p;
+        for(p = 0; p*packages_size + packages_size < length; p++){
+            if(send(client_sockfd, (data + p*packages_size), packages_size, 0) == -1)
 	        {
-		        perror("Couldn't send any or just some data to the client.");
+		        perror("Couldn't send any or just some data to the client. (loop)\n");
 		        return -1;
             }
         }
-        if (p*packages_size != length)
+
+        if (p*packages_size < length)
         {
-            if(send(client_sockfd, (data + (p-1)*packages_size), packages_size - length, 0) == -1)
+            if(send(client_sockfd, (data + p*packages_size), length - p*packages_size, 0) == -1)
 	        {
-		        perror("Couldn't send any or just some data to the client.");
+		        perror("Couldn't send any or just some data to the client.\n");
 		        return -1;
             }
-
         }
     }
-
 	printf("The data is sent to the client\n");
     return 0;
 }
 
 int http_request_send(int sockfd, http_request *req)
 {
-	
 
-	char request_buffer[] = "GET /index.html HTTP/1.1\r\nHost: 85.8.2.230\r\n\r\n"; 
+    char request_buffer[] = "GET /index.html HTTP/1.1\r\nHost: 85.8.2.230\r\n\r\n"; 
 	if(send(sockfd, request_buffer, strlen(request_buffer), 0) == -1)
 	{
 		perror("send"); 
@@ -242,7 +242,7 @@ void handle_client(int client_sockfd)
 
 	char *temp = http_read_chunk(server_sockfd);
 	printf("\n\n%s\n", temp);
-	send_to_client(client_sockfd, temp, 0);
+	send_to_client(client_sockfd, temp, 1337);
 	close(server_sockfd);
 }
 
@@ -256,13 +256,13 @@ void start_server(unsigned int port)
 	socklen_t sin_size; 
 	int rv; 
 	int yes = 1; 
-	
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC; 
 	hints.ai_socktype = SOCK_STREAM; 
 	hints.ai_flags = AI_PASSIVE; 
 
-	if((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0)
+    if((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0)
 	{
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return; 
