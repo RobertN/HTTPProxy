@@ -69,12 +69,19 @@ returns a http_request*.
 */
 http_request *http_read_header(int sockfd)
 {
+/*
 	http_request *req;
 	http_request_init(&req); 
 
 	char *line; 
 	line = read_line(sockfd); 
 	http_parse_method(req, line); 
+
+	while(1) 
+	{
+		line = read_line 
+	}
+*/
 	return NULL;
 }
 
