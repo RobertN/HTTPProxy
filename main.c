@@ -183,21 +183,6 @@ int http_request_send(int sockfd, http_request *req)
 
 	printf("Sent data\n"); 
 	
-	char *line; 
-	while(1)
-	{
-		line = read_line(sockfd); 
-		if(line[0] == '\r' && line[1] == '\n') 
-		{
-			// We received the end of the HTTP header 
-			break; 
-		}
-
-		printf("line: %s\n", line);
-
-		free(line); 
-	}
-
 	return 0;
 }
 
@@ -241,6 +226,19 @@ void handle_client(int client_sockfd)
 	// TODO: Send the request to the server 
 	http_request_send(server_sockfd, req); 
 	http_request_print(req);
+
+	while(1)
+	{
+		line = read_line(server_sockfd); 
+		send_to_client(client_sockfd, line, 0); 
+		if(line[0] == '\r' && line[1] == '\n') 
+		{
+			// We received the end of the HTTP header 
+			break; 
+		}
+
+		free(line); 
+	}
 
 	char *temp = http_read_chunk(server_sockfd);
 	printf("\n\n%s\n", temp);
