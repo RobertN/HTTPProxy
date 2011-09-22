@@ -139,9 +139,9 @@ char *read_line(int sockfd)
 int containing_forbidden_words(char str[]){
 
     // Forbidden words
-    char *words[] = {"SpongeBob", "Britney Spears", "Paris Hilton", "Norrkӧping", "Norrk&ouml;ping"};
-    int hits[] = {0, 0, 0, 0, 0}; // Every forbidden word need to have a zero in this array to be able to count number of char hits.
-    int numb_words = 5; // Number of forbidden words
+    char *words[] = {"SpongeBob", "Britney Spears", "Paris Hilton", "Norrkӧping", "Norrk&ouml;ping", "Norrk%C3%B6ping"};
+    int hits[] = {0, 0, 0, 0, 0, 0}; // Every forbidden word need to have a zero in this array to be able to count number of char hits.
+    int numb_words = 6; // Number of forbidden words
 
     int str_length = strlen(str);
     int c, w;   // Index for char in str, and index for word in words
