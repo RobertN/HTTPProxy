@@ -11,6 +11,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <sys/queue.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "proxy.h"
 
@@ -21,6 +23,8 @@ fails.
 */
 int http_connect(const char *host, const char *port)
 {
+	LOG(LOG_TRACE, "Connecting to HTTP server\n");
+
 	struct addrinfo hints, *servinfo, *p; 
 	int sockfd, rv; 
 
@@ -30,7 +34,7 @@ int http_connect(const char *host, const char *port)
 
 	if((rv = getaddrinfo(host, port, &hints, &servinfo)) != 0)
 	{
-		printf("Failed to lookup hostname\n");
+		LOG(LOG_ERROR, "Failed to lookup hostname\n");
 		return -1; 
 	}
 	
@@ -52,7 +56,7 @@ int http_connect(const char *host, const char *port)
 	}
 
 	if (p == NULL) {
-		fprintf(stderr, "client: failed to connect\n");
+		LOG(LOG_ERROR, "Failed to connect to HTTP server\n");
 		return -1;
 	}
 
@@ -65,6 +69,12 @@ returns a http_request*.
 */
 http_request *http_read_header(int sockfd)
 {
+	http_request *req;
+	http_request_init(&req); 
+
+	char *line; 
+	line = read_line(sockfd); 
+	http_parse_method(req, line); 
 	return NULL;
 }
 
@@ -75,5 +85,31 @@ returned from this function must be freed somewhere else.
 */
 char *http_read_chunk(int sockfd)
 {
-	return NULL; 
+	char *buf = malloc(sizeof(char));
+	memset(buf, '\0', sizeof(char));
+	char c; 
+	int current_size = 1; 
+
+	// set the socket as non blocking
+	int flags = fcntl(sockfd, F_GETFL, 0);
+	fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+	while(1)
+	{
+		ssize_t num_bytes = recv(sockfd, &c, 1, 0);
+		if(num_bytes == EAGAIN)
+		{
+			// read more
+			continue; 
+		}
+		else if(num_bytes == -1) 
+		{
+			break;
+		}
+
+		buf = realloc(buf, sizeof(char)*++current_size);
+		strncat(buf, &c, 1);
+	}
+
+	return buf; 
 }

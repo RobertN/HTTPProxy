@@ -1,6 +1,18 @@
 #ifndef PROXY_HH
 #define PROXY_HH
 
+#define LOG_ERROR		0
+#define LOG_WARNING 1
+#define LOG_NOTICE 	2
+#define LOG_TRACE		3
+
+#define ACTIVE_LEVEL 3
+#define LOG(LEVEL, MSG) 					\
+	if(LEVEL <= ACTIVE_LEVEL)  {		\
+		printf("LOG(%d): ", LEVEL); 	\
+		printf(MSG);									\
+	}																\
+
 extern int http_methods_len; 
 extern const char *http_methods[];  
 
