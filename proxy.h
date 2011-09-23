@@ -16,6 +16,8 @@
 extern int http_methods_len; 
 extern const char *http_methods[];  
 
+char *read_line(int sockfd); 
+
 enum http_methods_enum 
 	{
 		OPTIONS,
