@@ -16,6 +16,7 @@
 
 #include "proxy.h"
 #include "list.h"
+#include "http_message.h"
 
 /**
 Creates a TCP connection to the given host 
@@ -79,7 +80,7 @@ returns a http_request*.
 */
 http_request *http_read_header(int sockfd)
 {
-/*
+	LOG(LOG_TRACE, "Reading header\n");
 	http_request *req;
 	http_request_init(&req); 
 
@@ -96,10 +97,13 @@ http_request *http_read_header(int sockfd)
 			break; 
 
 		}
+
+		http_parse_metadata(req, line); 
+		
+		free(line); 
 	}
 
-*/
-	return NULL;
+	return req;
 }
 
 /**
