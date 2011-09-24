@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <sys/queue.h>
+#include <ctype.h>
 
 #include "proxy.h"
 #include "net.h"
@@ -69,7 +70,7 @@ int containing_forbidden_words(char str[]){
     {
         for (w = 0; w < numb_words; w++)
         {
-            if (words[w][ hits[w] ] == str[c]){
+            if (tolower(words[w][ hits[w] ]) == tolower(str[c])){
                 if(++hits[w] == strlen(words[w]))
                     return 1;
             }
