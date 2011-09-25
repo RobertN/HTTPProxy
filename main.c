@@ -74,8 +74,8 @@ int containing_forbidden_words(char str[]){
                 if(++hits[w] == strlen(words[w]))
                     return 1;
             }
-            else
-                hits[w] = 0;
+            else if (hits[w] != 0)
+                hits[w--] = 0;
         }
     }
 
