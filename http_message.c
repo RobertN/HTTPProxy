@@ -107,17 +107,40 @@ char *http_build_request(http_request *req)
 
 	// construct the http request 
 	int size = strlen("GET ") + 1; 
-	char *request_buffer = malloc(sizeof(char)*size);
-	memset(request_buffer, '\0', sizeof(char)*size);
+	//char *request_buffer = calloc(sizeof(char)*size);
+	char *request_buffer = calloc(size, sizeof(char));
 	strncat(request_buffer, "GET ", 4);
 
 	size += strlen(search_path) + 1; 
 	request_buffer = realloc(request_buffer, size);
 	strncat(request_buffer, search_path, strlen(search_path));
 
+	// TODO: Check the actual HTTP version that is used, and if 
+	// 1.1 is used we should append:
+	// 	Connection: close 
+	// to the header. 
 	size += strlen(" HTTP/1.0\r\n\r\n");
 	request_buffer = realloc(request_buffer, size); 
-	strncat(request_buffer, " HTTP/1.0\r\n\r\n", strlen(" HTTP/1.0\r\n\r\n"));
+	strncat(request_buffer, " HTTP/1.0\r\n", strlen(" HTTP/1.0\r\n"));
+
+	http_metadata_item *item; 
+	TAILQ_FOREACH(item, &req->metadata_head, entries) {
+		if(strcmp(item->key, "Accept-Encoding") == 0)
+			continue; 
+
+		size += strlen(item->key) + strlen(": ") + strlen(item->value) + strlen("\r\n");  
+		request_buffer = realloc(request_buffer, size);
+		strncat(request_buffer, item->key, strlen(item->key)); 
+		strncat(request_buffer, ": ", 3);
+		strncat(request_buffer, item->value, strlen(item->value));
+		strncat(request_buffer, "\r\n", 2);
+	}
+
+	size += strlen("\r\n");
+	request_buffer = realloc(request_buffer, size);
+	strncat(request_buffer, "\r\n", 2);
+
+	printf("request_buffer: \n%s\n", request_buffer);	
 
 	return request_buffer; 
 }
