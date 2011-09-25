@@ -25,10 +25,10 @@ fails.
 */
 int http_connect(http_request *req) 
 {
-	LOG(LOG_TRACE, "Connecting to HTTP server\n");
-
 	const char *host = list_get_key(&req->metadata_head, "Host"); 
 	const char *port = "80"; 
+
+	LOG(LOG_TRACE, "Connecting to HTTP server: %s\n", host);
 
 	if(host == NULL)
 	{
@@ -120,7 +120,7 @@ char *http_read_chunk(int sockfd)
 
 	// set the socket as non blocking
 	int flags = fcntl(sockfd, F_GETFL, 0);
-	fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+	//fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
 
 	while(1)
 	{
@@ -130,7 +130,11 @@ char *http_read_chunk(int sockfd)
 			// read more
 			continue; 
 		}
-		else if(num_bytes == -1) 
+		else if(num_bytes <= -1) 
+		{
+			break;
+		}
+		else if(num_bytes == 0)
 		{
 			break;
 		}
