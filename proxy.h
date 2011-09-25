@@ -7,10 +7,10 @@
 #define LOG_TRACE		3
 
 #define ACTIVE_LEVEL 3
-#define LOG(LEVEL, MSG) 					\
+#define LOG(LEVEL, MSG, ...) 					\
 	if(LEVEL <= ACTIVE_LEVEL)  {		\
 		printf("LOG(%d): ", LEVEL); 	\
-		printf(MSG);									\
+		printf(MSG, ##__VA_ARGS__);									\
 	}																\
 
 extern int http_methods_len; 
