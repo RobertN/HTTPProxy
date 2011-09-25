@@ -119,8 +119,7 @@ int send_to_client(int client_sockfd, char data[], int packages_size)
 
 int http_request_send(int sockfd, http_request *req)
 {
-	LOG(LOG_TRACE, "Requesting ");
-	printf("%s\n", req->search_path);
+	LOG(LOG_TRACE, "Requesting: %s\n", req->search_path);
 
 	char *request_buffer = http_build_request(req); 
 
@@ -169,6 +168,9 @@ void handle_client(int client_sockfd)
 		{
 			// We received the end of the HTTP header 
 			LOG(LOG_TRACE, "Received the end of the HTTP response header\n");
+			
+			free(line);
+			break;
 		}
 
 		free(line); 
@@ -178,10 +180,10 @@ void handle_client(int client_sockfd)
 	char *temp = http_read_chunk(server_sockfd);
 	LOG(LOG_TRACE, "Received the content\n");
 
-    if (containing_forbidden_words(temp)){
-		LOG(LOG_TRACE, "Received data contains forbidden words!\n");
-        // TODO: change the content in temp (and header?)
-        //*temp = "<html>\n<title>\nNet Ninny Error Page 2 for CPSC 441 Assignment 1\n</title>\n\n<body>\n<p>\nSorry, but the Web page that you were trying to access\nis inappropriate for you, based on some of the words it contains.\nThe page has been blocked to avoid insulting your intelligence.\n</p>\n\n<p>\nNet Ninny\n</p>\n\n</body>\n\n</html>\n\0";
+	if (containing_forbidden_words(temp)){
+		LOG(LOG_TRACE, "Received data contains forbidden words!\n"); 
+				// TODO: change the content in temp (and header?)
+        //*temp = "<html>\n<title>\nNet Ninny Error Page 3 for CPSC 441 Assignment 1\n</title>\n\n<body>\n<p>\nSorry, but the Web page that you were trying to access\nis inappropriate for you, based on some of the words it contains.\nThe page has been blocked to avoid insulting your intelligence.\n</p>\n\n<p>\nNet Ninny\n</p>\n\n</body>\n\n</html>\n\0";
     }
 	send_to_client(client_sockfd, temp, 1337);
 	close(server_sockfd);
