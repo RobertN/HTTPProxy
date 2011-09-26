@@ -21,10 +21,10 @@
 // TODO: Test all the edge cases
 char *read_line(int sockfd)
 {
-    int buffer_size = 2; 
-    char *line = (char*)malloc(sizeof(char)*buffer_size+1); 
+    int buffer_size = 2;
+    char *line = (char*)malloc(sizeof(char)*buffer_size+1);
     char c;
-    int length = 0;	
+    int length = 0;
     int counter = 0;
 
     while(1) 
@@ -124,8 +124,8 @@ int http_request_send(int sockfd, http_request *req)
     if(send(sockfd, request_buffer, strlen(request_buffer), 0) == -1)
     {
         free(request_buffer);
-        perror("send"); 
-        return 1; 
+        perror("send");
+        return 1;
     }
     free(request_buffer);
 
@@ -136,9 +136,9 @@ int http_request_send(int sockfd, http_request *req)
 
 void handle_client(int client_sockfd)
 {
-    char *line; 
-    int server_sockfd; 
-    http_request *req; 
+    char *line;
+    int server_sockfd;
+    http_request *req;
 
     req = http_read_header(client_sockfd);
     if(req == NULL)
@@ -155,11 +155,11 @@ void handle_client(int client_sockfd)
     }
 
     server_sockfd = http_connect(req);
-    if(server_sockfd == -1) 
+    if(server_sockfd == -1)
     {
         LOG(LOG_ERROR, "Failed to connect to host\n");
         http_request_destroy(req);
-        return; 
+        return;
     }
 
     LOG(LOG_TRACE, "Connected to host\n");
@@ -167,6 +167,7 @@ void handle_client(int client_sockfd)
     http_request_send(server_sockfd, req); 
     http_request_destroy(req);
     LOG(LOG_TRACE, "Beginning to retrieve the response header\n");
+    int is_text_content = 0;
     while(1)
     {
         line = read_line(server_sockfd); 
@@ -178,6 +179,8 @@ void handle_client(int client_sockfd)
             free(line);
             break;
         }
+        else if (strcmp(line, "Content-Type: text/html\r\n") == 0)
+            is_text_content = 1;
 
         free(line); 
     }
@@ -187,11 +190,11 @@ void handle_client(int client_sockfd)
     char *temp = http_read_chunk(server_sockfd, &chunk_length);
     LOG(LOG_TRACE, "Received the content, %d bytes\n", (int)chunk_length);
 
-    if (containing_forbidden_words(temp)){
+    if (is_text_content && containing_forbidden_words(temp)){
         LOG(LOG_TRACE, "Received data contains forbidden words!\n"); 
         char *error2 = "<html>\n<title>\nNet Ninny Error Page 3 for CPSC 441 Assignment 1\n</title>\n\n<body>\n<p>\nSorry, but the Web page that you were trying to access\nis inappropriate for you, based on some of the words it contains.\nThe page has been blocked to avoid insulting your intelligence.\n</p>\n\n<p>\nNet Ninny\n</p>\n\n</body>\n\n</html>\n";
 
-    send_to_client(client_sockfd, error2, 1337, strlen(error2));
+        send_to_client(client_sockfd, error2, 1337, strlen(error2));
     }
     else
         send_to_client(client_sockfd, temp, 1337, chunk_length);
