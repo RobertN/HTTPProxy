@@ -83,7 +83,6 @@ int containing_forbidden_words(char str[]){
 int send_to_client(int client_sockfd, char data[], int packages_size, ssize_t length)
 {
     // if packages_size is set to 0, then the function will try to send all data as one package.
-    //int length = strlen(data);
     if(packages_size < 1){
         if(send(client_sockfd, data, length, 0) == -1)
         {
