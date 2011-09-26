@@ -146,6 +146,12 @@ void handle_client(int client_sockfd)
         return;
     }
 
+    if (containing_forbidden_words(req->search_path) || containing_forbidden_words(list_get_key(&req->metadata_head, "Host"))){
+        char *error1 = "HTTP/1.1 200 OK\r\nServer: Net Ninny\r\nContent-Type: text/html\r\n\r\n<html>\n\n<title>\nNet Ninny Error Page 1 for CPSC 441 Assignment 1\n</title>\n\n<body>\n<p>\nSorry, but the Web page that you were trying to access\nis inappropriate for you, based on the URL.\nThe page has been blocked to avoid insulting your intelligence.\n</p>\n\n<p>\nNet Ninny\n</p>\n\n</body>\n\n</html>\n";
+        send_to_client(client_sockfd, error1, 0, strlen(error1));
+        return;
+    }
+
     server_sockfd = http_connect(req);
     if(server_sockfd == -1) 
     {
@@ -180,8 +186,9 @@ void handle_client(int client_sockfd)
 
     if (containing_forbidden_words(temp)){
         LOG(LOG_TRACE, "Received data contains forbidden words!\n"); 
-        char *error3 = "<html>\n<title>\nNet Ninny Error Page 3 for CPSC 441 Assignment 1\n</title>\n\n<body>\n<p>\nSorry, but the Web page that you were trying to access\nis inappropriate for you, based on some of the words it contains.\nThe page has been blocked to avoid insulting your intelligence.\n</p>\n\n<p>\nNet Ninny\n</p>\n\n</body>\n\n</html>\n\0";
-        temp = error3;
+        char *error2 = "<html>\n<title>\nNet Ninny Error Page 3 for CPSC 441 Assignment 1\n</title>\n\n<body>\n<p>\nSorry, but the Web page that you were trying to access\nis inappropriate for you, based on some of the words it contains.\nThe page has been blocked to avoid insulting your intelligence.\n</p>\n\n<p>\nNet Ninny\n</p>\n\n</body>\n\n</html>\n";
+        temp = error2;
+        chunk_length = strlen(temp);
     }
     send_to_client(client_sockfd, temp, 1337, chunk_length);
     close(server_sockfd);
@@ -206,7 +213,7 @@ void start_server(char *port)
     if((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0)
     {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-        return; 
+        return;
     }
 
     for(p = servinfo; p != NULL; p = p->ai_next)
