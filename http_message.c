@@ -35,10 +35,8 @@ void http_request_destroy(http_request *req)
     LOG(LOG_TRACE, "http_request_destroy\n");
     free((char*)req->search_path);
 
-    LOG(LOG_TRACE, "Freeing the metadata list\n");
     struct http_metadata_item *item; 
     TAILQ_FOREACH(item, &req->metadata_head, entries) {
-        LOG(LOG_TRACE, "Freeing %s\n", item->key);
         free((char*)item->key);
         free((char*)item->value); 
         free(item);
@@ -92,15 +90,13 @@ void http_parse_method(http_request *result, char *line)
     str_part = strtok(NULL, "\r");
     if(strcmp(str_part, "HTTP/1.0") == 0)
     {
-        LOG(LOG_TRACE, "HTTP version is 1.0\n");
         result->version = HTTP_VERSION_1_0;
     } else if(strcmp(str_part, "HTTP/1.1") == 0)
     {
-        LOG(LOG_TRACE, "HTTP version is 1.1\n");
         result->version = HTTP_VERSION_1_1;
     } else
     {
-        LOG(LOG_TRACE, "Unknown HTTP version\n");
+        LOG(LOG_WARNING, "Unknown HTTP version\n");
     }
 }
 
@@ -119,10 +115,13 @@ void http_parse_metadata(http_request *result, char *line)
 
     free(line_copy);
 
-    http_metadata_item *item = (http_metadata_item*)malloc(sizeof(http_metadata_item)); 
+    // create the http_metadata_item object and
+    // put the data in it
+    http_metadata_item *item = malloc(sizeof(*item)); 
     item->key = key; 
     item->value = value; 
 
+    // add the new item to the list of metadatas
     TAILQ_INSERT_TAIL(&result->metadata_head, item, entries); 
 }
 
@@ -165,8 +164,9 @@ char *http_build_request(http_request *req)
 
     http_metadata_item *item; 
     TAILQ_FOREACH(item, &req->metadata_head, entries) {
-        if((strcmp(item->key, "Connection") == 0) ||
-           (strcmp(item->key, "Accept-Encoding") == 0))
+        // Remove Connection properties in header in case
+        // there are any
+        if(strcmp(item->key, "Connection") == 0)
         {
             continue; 
         }
