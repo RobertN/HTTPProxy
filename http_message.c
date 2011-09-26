@@ -119,13 +119,14 @@ char *http_build_request(http_request *req)
 	// 1.1 is used we should append:
 	// 	Connection: close 
 	// to the header. 
-	size += strlen(" HTTP/1.0\r\n\r\n");
+	size += strlen(" HTTP/1.1\r\n\r\n");
 	request_buffer = realloc(request_buffer, size); 
-	strncat(request_buffer, " HTTP/1.0\r\n", strlen(" HTTP/1.0\r\n"));
+	strncat(request_buffer, " HTTP/1.1\r\n", strlen(" HTTP/1.1\r\n"));
 
 	http_metadata_item *item; 
 	TAILQ_FOREACH(item, &req->metadata_head, entries) {
-		if(strcmp(item->key, "Accept-Encoding") == 0)
+		if((strcmp(item->key, "Connection") == 0) ||
+				strcmp(item->key, "Accept-Encoding") == 0)
 			continue; 
 
 		size += strlen(item->key) + strlen(": ") + strlen(item->value) + strlen("\r\n");  
