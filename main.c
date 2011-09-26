@@ -18,8 +18,6 @@
 #include "list.h"
 #include "http_message.h"
 
-#define PORT "8080"
-
 // TODO: Test all the edge cases
 char *read_line(int sockfd)
 {
@@ -168,7 +166,6 @@ void handle_client(int client_sockfd)
 		{
 			// We received the end of the HTTP header 
 			LOG(LOG_TRACE, "Received the end of the HTTP response header\n");
-			
 			free(line);
 			break;
 		}
@@ -182,14 +179,14 @@ void handle_client(int client_sockfd)
 
 	if (containing_forbidden_words(temp)){
 		LOG(LOG_TRACE, "Received data contains forbidden words!\n"); 
-				// TODO: change the content in temp (and header?)
-        //*temp = "<html>\n<title>\nNet Ninny Error Page 3 for CPSC 441 Assignment 1\n</title>\n\n<body>\n<p>\nSorry, but the Web page that you were trying to access\nis inappropriate for you, based on some of the words it contains.\nThe page has been blocked to avoid insulting your intelligence.\n</p>\n\n<p>\nNet Ninny\n</p>\n\n</body>\n\n</html>\n\0";
+        char *error3 = "<html>\n<title>\nNet Ninny Error Page 3 for CPSC 441 Assignment 1\n</title>\n\n<body>\n<p>\nSorry, but the Web page that you were trying to access\nis inappropriate for you, based on some of the words it contains.\nThe page has been blocked to avoid insulting your intelligence.\n</p>\n\n<p>\nNet Ninny\n</p>\n\n</body>\n\n</html>\n\0";
+        temp = error3;
     }
 	send_to_client(client_sockfd, temp, 1337);
 	close(server_sockfd);
 }
 
-void start_server(unsigned int port)
+void start_server(char *port)
 {
 	printf("Starting server\n"); 
 
@@ -205,7 +202,7 @@ void start_server(unsigned int port)
 	hints.ai_socktype = SOCK_STREAM; 
 	hints.ai_flags = AI_PASSIVE; 
 
-	if((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0)
+	if((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0)
 	{
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return; 
@@ -278,7 +275,10 @@ void start_server(unsigned int port)
 
 int main(int argc, char *argv[])
 {
-	start_server(8080); 
+    char *port = "8080";
+    if (argc > 1)
+        port = argv[1];
+	start_server(port);
 	return 0; 
 }
 
