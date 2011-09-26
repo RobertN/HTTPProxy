@@ -19,11 +19,11 @@
 #include "list.h"
 #include "http_message.h"
 
-/**
-	Creates a TCP connection to the given host 
-	and returns the socket. Returns -1 if something
-	fails.
- */
+/*
+Creates a TCP connection to the given host 
+and returns the socket. Returns -1 if something
+fails.
+*/
 int http_connect(http_request *req) 
 {
 	const char *host = list_get_key(&req->metadata_head, "Host"); 
@@ -75,10 +75,10 @@ int http_connect(http_request *req)
 	return sockfd;
 }
 
-/**
-	Read a HTTP header from the given socket and
-	returns a http_request*. 
- */
+/*
+Read a HTTP header from the given socket and
+returns a http_request*. 
+*/
 http_request *http_read_header(int sockfd)
 {
 	LOG(LOG_TRACE, "Reading header\n");
@@ -107,24 +107,26 @@ http_request *http_read_header(int sockfd)
 	return req;
 }
 
-/**
-	Read as much data as possible from the given socket
-	and returns it as a null terminated char pointer. Data 
-	returned from this function must be freed somewhere else. 
- */
+/*
+Read as much data as possible from the given socket
+and returns it as a null terminated char pointer. Data 
+returned from this function must be freed somewhere else. 
+*/
 char *http_read_chunk(int sockfd, ssize_t *length)
 {
+    if(length == NULL)
+    {
+        LOG(LOG_ERROR, "The length pointer supplied to http_read_chunk is NULL\n");
+        return NULL;
+    }
+
 	char *buf = malloc(sizeof(char));
 	memset(buf, '\0', sizeof(char));
 	char c; 
 	int current_size = 1; 
 
-    time_t timeout = 1; 
+    time_t timeout = 5; 
     time_t start = time(NULL);
-
-	// set the socket as non blocking
-	int flags = fcntl(sockfd, F_GETFL, 0);
-	//fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
 
 	ssize_t total_bytes = 0;
 
@@ -138,12 +140,8 @@ char *http_read_chunk(int sockfd, ssize_t *length)
         }
 
 		ssize_t num_bytes = recv(sockfd, &c, 1, 0);
-		if(num_bytes == EAGAIN)
-		{
-			// read more
-			continue; 
-		}
-		else if(num_bytes <= -1) 
+
+		if(num_bytes <= -1) 
 		{
 			break;
 		}
@@ -152,16 +150,14 @@ char *http_read_chunk(int sockfd, ssize_t *length)
 			break;
 		}
 
+        // reallocate the buffer so the new data will fit
 		buf = realloc(buf, sizeof(char)*++current_size);
 		buf[total_bytes] = c; 
-		//strncat(buf, &c, 1);
 
 		total_bytes += num_bytes; 
 	}
 
-	fcntl(sockfd, F_SETFL, flags);
-
-	printf("Received: %d\n", (int)total_bytes);
+	LOG(LOG_TRACE, "Received: %d\n", (int)total_bytes);
 
 	*length = total_bytes; 
 
