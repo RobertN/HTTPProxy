@@ -7,27 +7,27 @@
 
 int http_methods_len = 9; 
 const char *http_methods[] = 
-	{
-		"OPTIONS", 
-		"GET", 
-		"HEAD", 
-		"POST", 
-		"PUT", 
-		"DELETE", 
-		"TRACE", 
-		"CONNECT",
-		"UNKNOWN"
-	}; 
+{
+    "OPTIONS", 
+    "GET", 
+    "HEAD", 
+    "POST", 
+    "PUT", 
+    "DELETE", 
+    "TRACE", 
+    "CONNECT",
+    "UNKNOWN"
+}; 
 
 void http_request_init(http_request **req)
 {
-	*req = (http_request*)malloc(sizeof(http_request));
+    *req = (http_request*)malloc(sizeof(http_request));
 
-	http_request *request = *req; 
-	request->method = 0; 
-	request->search_path = NULL; 
+    http_request *request = *req; 
+    request->method = 0; 
+    request->search_path = NULL; 
 
-	TAILQ_INIT(&request->metadata_head); 
+    TAILQ_INIT(&request->metadata_head); 
 }
 
 void http_request_destroy(http_request *req)
@@ -36,112 +36,148 @@ void http_request_destroy(http_request *req)
 
 void http_request_print(http_request *req)
 {
-	printf("[HTTP_REQUEST] \n"); 
-	printf("method:\t\t%s\n", 
-		http_methods[req->method]);
-	printf("path:\t\t%s\n", 
-		req->search_path); 
+    printf("[HTTP_REQUEST] \n"); 
+    printf("method:\t\t%s\n", 
+            http_methods[req->method]);
+    printf("path:\t\t%s\n", 
+            req->search_path); 
 
-	printf("[Metadata] \n"); 
-	struct http_metadata_item *item; 
-	TAILQ_FOREACH(item, &req->metadata_head, entries) {
-		printf("%s: %s\n", item->key, item->value); 
-	}
+    printf("[Metadata] \n"); 
+    struct http_metadata_item *item; 
+    TAILQ_FOREACH(item, &req->metadata_head, entries) {
+        printf("%s: %s\n", item->key, item->value); 
+    }
 
-	printf("\n"); 
+    printf("\n"); 
 }
 
 void http_parse_method(http_request *result, char *line)
 {
-	char *str_part = strtok(line, " ");
-	
-	int method, found = 0; 
-	for(method = 0; method < http_methods_len; method++)
-	{
-		if(strcmp(str_part, http_methods[method]) == 0)
-		{
-			found = 1; 
-			result->method = method;
-			break; 
-		}
-	}
+    char *str_part = strtok(line, " ");
 
-	if(!found)
-	{
-		return; 
-	}
+    int method, found = 0; 
+    for(method = 0; method < http_methods_len; method++)
+    {
+        if(strcmp(str_part, http_methods[method]) == 0)
+        {
+            found = 1; 
+            result->method = method;
+            break; 
+        }
+    }
 
-	// Get the search path from the request
-	// (perhaps this should only be done when we
-	// get a GET request?)
-	str_part = strtok(NULL, " "); 
-	result->search_path = strdup(str_part); 
+    if(!found)
+    {
+        return; 
+    }
 
-	// TODO: Retrieve the HTTP version
+    // Get the search path from the request
+    // (perhaps this should only be done when we
+    // get a GET request?)
+    str_part = strtok(NULL, " "); 
+    result->search_path = strdup(str_part); 
+
+    // TODO: Retrieve the HTTP version
+    str_part = strtok(NULL, "\r");
+    if(strcmp(str_part, "HTTP/1.0") == 0)
+    {
+        LOG(LOG_TRACE, "HTTP version is 1.0\n");
+        result->version = HTTP_VERSION_1_0;
+    } else if(strcmp(str_part, "HTTP/1.1") == 0)
+    {
+        LOG(LOG_TRACE, "HTTP version is 1.1\n");
+        result->version = HTTP_VERSION_1_1;
+    } else
+    {
+        LOG(LOG_TRACE, "Unknown HTTP version\n");
+    }
 }
 
 // Content-Byte: 101
 void http_parse_metadata(http_request *result, char *line)
 {
-	char *key = strdup(strtok(line, ":")); 
+    char *key = strdup(strtok(line, ":")); 
 
-	char *value = strdup(strtok(NULL, "\r")); 
-	
-	// remove whitespaces :)
-	char *p = value; 
-	while(*p == ' ') p++; 
-	value = p; 
+    char *value = strdup(strtok(NULL, "\r")); 
 
-	http_metadata_item *item = (http_metadata_item*)malloc(sizeof(http_metadata_item)); 
-	item->key = key; 
-	item->value = value; 
+    // remove whitespaces :)
+    char *p = value; 
+    while(*p == ' ') p++; 
+    value = p; 
 
-	TAILQ_INSERT_TAIL(&result->metadata_head, item, entries); 
+    http_metadata_item *item = (http_metadata_item*)malloc(sizeof(http_metadata_item)); 
+    item->key = key; 
+    item->value = value; 
+
+    TAILQ_INSERT_TAIL(&result->metadata_head, item, entries); 
 }
 
 
 
 char *http_build_request(http_request *req)
 {
-	const char *search_path = req->search_path; 
+    const char *search_path = req->search_path; 
 
-	// construct the http request 
-	int size = strlen("GET ") + 1; 
-	//char *request_buffer = calloc(sizeof(char)*size);
-	char *request_buffer = calloc(size, sizeof(char));
-	strncat(request_buffer, "GET ", 4);
+    // construct the http request 
+    int size = strlen("GET ") + 1; 
+    //char *request_buffer = calloc(sizeof(char)*size);
+    char *request_buffer = calloc(size, sizeof(char));
+    strncat(request_buffer, "GET ", 4);
 
-	size += strlen(search_path) + 1; 
-	request_buffer = realloc(request_buffer, size);
-	strncat(request_buffer, search_path, strlen(search_path));
+    size += strlen(search_path) + 1; 
+    request_buffer = realloc(request_buffer, size);
+    strncat(request_buffer, search_path, strlen(search_path));
 
-	// TODO: Check the actual HTTP version that is used, and if 
-	// 1.1 is used we should append:
-	// 	Connection: close 
-	// to the header. 
-	size += strlen(" HTTP/1.1\r\n\r\n");
-	request_buffer = realloc(request_buffer, size); 
-	strncat(request_buffer, " HTTP/1.1\r\n", strlen(" HTTP/1.1\r\n"));
+    // TODO: Check the actual HTTP version that is used, and if 
+    // 1.1 is used we should append:
+    // 	Connection: close 
+    // to the header. 
+    switch(req->version)
+    {
+        case HTTP_VERSION_1_0:
+            size += strlen(" HTTP/1.0\r\n\r\n");
+            request_buffer = realloc(request_buffer, size); 
+            strncat(request_buffer, " HTTP/1.0\r\n", strlen(" HTTP/1.0\r\n"));
+            break; 
+        case HTTP_VERSION_1_1:
+            size += strlen(" HTTP/1.1\r\n\r\n");
+            request_buffer = realloc(request_buffer, size); 
+            strncat(request_buffer, " HTTP/1.1\r\n", strlen(" HTTP/1.1\r\n"));
+            break; 
+        default: 
+            LOG(LOG_ERROR, "Failed to retrieve the http version\n");
+            return NULL; 
+    }
 
-	http_metadata_item *item; 
-	TAILQ_FOREACH(item, &req->metadata_head, entries) {
-		if((strcmp(item->key, "Connection") == 0) ||
-				strcmp(item->key, "Accept-Encoding") == 0)
-			continue; 
+    http_metadata_item *item; 
+    TAILQ_FOREACH(item, &req->metadata_head, entries) {
+        if((strcmp(item->key, "Connection") == 0) ||
+           (strcmp(item->key, "Accept-Encoding") == 0))
+        {
+            continue; 
+        }
 
-		size += strlen(item->key) + strlen(": ") + strlen(item->value) + strlen("\r\n");  
-		request_buffer = realloc(request_buffer, size);
-		strncat(request_buffer, item->key, strlen(item->key)); 
-		strncat(request_buffer, ": ", 3);
-		strncat(request_buffer, item->value, strlen(item->value));
-		strncat(request_buffer, "\r\n", 2);
-	}
+        size += strlen(item->key) + strlen(": ") + strlen(item->value) + strlen("\r\n");  
+        request_buffer = realloc(request_buffer, size);
+        strncat(request_buffer, item->key, strlen(item->key)); 
+        strncat(request_buffer, ": ", 3);
+        strncat(request_buffer, item->value, strlen(item->value));
+        strncat(request_buffer, "\r\n", 2);
+    }
 
-	size += strlen("\r\n");
-	request_buffer = realloc(request_buffer, size);
-	strncat(request_buffer, "\r\n", 2);
+    if(req->version == HTTP_VERSION_1_1)
+    {
+        size += strlen("Connection: close\r\n");
+        request_buffer = realloc(request_buffer, size);
+        strncat(request_buffer, "Connection: close\r\n", strlen("Connection: close\r\n"));
+    }
 
-	printf("request_buffer: \n%s\n", request_buffer);	
 
-	return request_buffer; 
+    size += strlen("\r\n");
+    request_buffer = realloc(request_buffer, size);
+    strncat(request_buffer, "\r\n", 2);
+
+    printf("request_buffer: \n%s\n", request_buffer);	
+
+    return request_buffer; 
 }
