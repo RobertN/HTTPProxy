@@ -32,13 +32,16 @@ void http_request_init(http_request **req)
 
 void http_request_destroy(http_request *req)
 {
+    LOG(LOG_TRACE, "http_request_destroy\n");
     free((char*)req->search_path);
 
+    LOG(LOG_TRACE, "Freeing the metadata list\n");
     struct http_metadata_item *item; 
     TAILQ_FOREACH(item, &req->metadata_head, entries) {
+        LOG(LOG_TRACE, "Freeing %s\n", item->key);
         free((char*)item->key);
-        free((char*)item->value); 
-        free((char*)item);
+        //free((char*)item->value); 
+        free(item);
     }
 }
 
