@@ -19,10 +19,10 @@
 #include "http_message.h"
 
 /**
-Creates a TCP connection to the given host 
-and returns the socket. Returns -1 if something
-fails.
-*/
+	Creates a TCP connection to the given host 
+	and returns the socket. Returns -1 if something
+	fails.
+ */
 int http_connect(http_request *req) 
 {
 	const char *host = list_get_key(&req->metadata_head, "Host"); 
@@ -48,7 +48,7 @@ int http_connect(http_request *req)
 		LOG(LOG_ERROR, "Failed to lookup hostname\n");
 		return -1; 
 	}
-	
+
 	// loop through all the results and connect to the first we can
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 		if ((sockfd = socket(p->ai_family, p->ai_socktype,
@@ -75,9 +75,9 @@ int http_connect(http_request *req)
 }
 
 /**
-Read a HTTP header from the given socket and
-returns a http_request*. 
-*/
+	Read a HTTP header from the given socket and
+	returns a http_request*. 
+ */
 http_request *http_read_header(int sockfd)
 {
 	LOG(LOG_TRACE, "Reading header\n");
@@ -99,7 +99,7 @@ http_request *http_read_header(int sockfd)
 		}
 
 		http_parse_metadata(req, line); 
-		
+
 		free(line); 
 	}
 
@@ -107,10 +107,10 @@ http_request *http_read_header(int sockfd)
 }
 
 /**
-Read as much data as possible from the given socket
-and returns it as a null terminated char pointer. Data 
-returned from this function must be freed somewhere else. 
-*/
+	Read as much data as possible from the given socket
+	and returns it as a null terminated char pointer. Data 
+	returned from this function must be freed somewhere else. 
+ */
 char *http_read_chunk(int sockfd, ssize_t *length)
 {
 	char *buf = malloc(sizeof(char));
