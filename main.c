@@ -124,9 +124,11 @@ int http_request_send(int sockfd, http_request *req)
     // send the http request to the web server 
     if(send(sockfd, request_buffer, strlen(request_buffer), 0) == -1)
     {
+        free(request_buffer);
         perror("send"); 
         return 1; 
     }
+    free(request_buffer);
 
     LOG(LOG_TRACE, "Sent HTTP header to web server\n");
 
@@ -146,8 +148,9 @@ void handle_client(int client_sockfd)
         return;
     }
 
-    if (containing_forbidden_words(req->search_path) || containing_forbidden_words(list_get_key(&req->metadata_head, "Host"))){
+    if (containing_forbidden_words((char*)req->search_path) || containing_forbidden_words((char*)list_get_key(&req->metadata_head, "Host"))){
         char *error1 = "HTTP/1.1 200 OK\r\nServer: Net Ninny\r\nContent-Type: text/html\r\n\r\n<html>\n\n<title>\nNet Ninny Error Page 1 for CPSC 441 Assignment 1\n</title>\n\n<body>\n<p>\nSorry, but the Web page that you were trying to access\nis inappropriate for you, based on the URL.\nThe page has been blocked to avoid insulting your intelligence.\n</p>\n\n<p>\nNet Ninny\n</p>\n\n</body>\n\n</html>\n";
+        http_request_destroy(req);
         send_to_client(client_sockfd, error1, 0, strlen(error1));
         return;
     }
@@ -156,13 +159,14 @@ void handle_client(int client_sockfd)
     if(server_sockfd == -1) 
     {
         LOG(LOG_ERROR, "Failed to connect to host\n");
+        http_request_destroy(req);
         return; 
     }
 
     LOG(LOG_TRACE, "Connected to host\n");
 
     http_request_send(server_sockfd, req); 
-
+    http_request_destroy(req);
     LOG(LOG_TRACE, "Beginning to retrieve the response header\n");
     while(1)
     {
