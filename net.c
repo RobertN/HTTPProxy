@@ -13,6 +13,7 @@
 #include <sys/queue.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
 
 #include "proxy.h"
 #include "list.h"
@@ -118,6 +119,9 @@ char *http_read_chunk(int sockfd, ssize_t *length)
 	char c; 
 	int current_size = 1; 
 
+    time_t timeout = 1; 
+    time_t start = time(NULL);
+
 	// set the socket as non blocking
 	int flags = fcntl(sockfd, F_GETFL, 0);
 	//fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
@@ -126,6 +130,13 @@ char *http_read_chunk(int sockfd, ssize_t *length)
 
 	while(1)
 	{
+        // check if we should timeout
+        if(time(NULL) - start == timeout)
+        {
+            LOG(LOG_WARNING, "Request timed out\n");
+            break; 
+        }
+
 		ssize_t num_bytes = recv(sockfd, &c, 1, 0);
 		if(num_bytes == EAGAIN)
 		{
