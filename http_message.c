@@ -32,6 +32,14 @@ void http_request_init(http_request **req)
 
 void http_request_destroy(http_request *req)
 {
+    free((char*)req->search_path);
+
+    struct http_metadata_item *item; 
+    TAILQ_FOREACH(item, &req->metadata_head, entries) {
+        free((char*)item->key);
+        free((char*)item->value); 
+        free((char*)item);
+    }
 }
 
 void http_request_print(http_request *req)
