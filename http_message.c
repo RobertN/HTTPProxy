@@ -40,7 +40,7 @@ void http_request_destroy(http_request *req)
     TAILQ_FOREACH(item, &req->metadata_head, entries) {
         LOG(LOG_TRACE, "Freeing %s\n", item->key);
         free((char*)item->key);
-        //free((char*)item->value); 
+        free((char*)item->value); 
         free(item);
     }
 }
@@ -107,14 +107,17 @@ void http_parse_method(http_request *result, char *line)
 // Content-Byte: 101
 void http_parse_metadata(http_request *result, char *line)
 {
-    char *key = strdup(strtok(line, ":")); 
+    char *line_copy = strdup(line); 
+    char *key = strdup(strtok(line_copy, ":")); 
 
-    char *value = strdup(strtok(NULL, "\r")); 
+    char *value = strtok(NULL, "\r"); 
 
     // remove whitespaces :)
     char *p = value; 
     while(*p == ' ') p++; 
-    value = p; 
+    value = strdup(p); 
+
+    free(line_copy);
 
     http_metadata_item *item = (http_metadata_item*)malloc(sizeof(http_metadata_item)); 
     item->key = key; 
@@ -187,8 +190,6 @@ char *http_build_request(http_request *req)
     size += strlen("\r\n");
     request_buffer = realloc(request_buffer, size);
     strncat(request_buffer, "\r\n", 2);
-
-    printf("request_buffer: \n%s\n", request_buffer);	
 
     return request_buffer; 
 }
