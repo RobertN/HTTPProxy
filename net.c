@@ -111,7 +111,7 @@ Read as much data as possible from the given socket
 and returns it as a null terminated char pointer. Data 
 returned from this function must be freed somewhere else. 
 */
-char *http_read_chunk(int sockfd)
+char *http_read_chunk(int sockfd, ssize_t *length)
 {
 	char *buf = malloc(sizeof(char));
 	memset(buf, '\0', sizeof(char));
@@ -121,6 +121,8 @@ char *http_read_chunk(int sockfd)
 	// set the socket as non blocking
 	int flags = fcntl(sockfd, F_GETFL, 0);
 	//fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+	ssize_t total_bytes = 0;
 
 	while(1)
 	{
@@ -140,10 +142,17 @@ char *http_read_chunk(int sockfd)
 		}
 
 		buf = realloc(buf, sizeof(char)*++current_size);
-		strncat(buf, &c, 1);
+		buf[total_bytes] = c; 
+		//strncat(buf, &c, 1);
+
+		total_bytes += num_bytes; 
 	}
 
 	fcntl(sockfd, F_SETFL, flags);
+
+	printf("Received: %d\n", (int)total_bytes);
+
+	*length = total_bytes; 
 
 	return buf; 
 }
