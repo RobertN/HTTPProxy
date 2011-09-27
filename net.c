@@ -26,8 +26,25 @@ fails.
 */
 int http_connect(http_request *req) 
 {
-	const char *host = list_get_key(&req->metadata_head, "Host"); 
-	const char *port = "80"; 
+	char *host = (char*)list_get_key(&req->metadata_head, "Host"); 
+    char *port = strstr(host, ":");
+
+    if(port == NULL)
+    {
+        port = calloc(3, sizeof(char));
+        strncat(port, "80", 2);
+        LOG(LOG_TRACE, "Using default port\n");
+    }
+    else
+    {
+        // remove the port number from the host
+        host = strtok(host, ":");
+
+        // jump over the ':' char
+        port++;
+        LOG(LOG_TRACE, "Using port: %s\n", port);
+    }
+    
 
 	LOG(LOG_TRACE, "Connecting to HTTP server: %s\n", host);
 
@@ -95,6 +112,8 @@ http_request *http_read_header(int sockfd)
 		if(line[0] == '\r' && line[1] == '\n')
 		{
 			// We received the end of the HTTP header 
+            LOG(LOG_TRACE, "Received header\n");
+               
 			break; 
 
 		}
