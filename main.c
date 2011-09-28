@@ -206,10 +206,10 @@ void handle_client(int client_sockfd)
         LOG(LOG_TRACE, "Received data contains forbidden words!\n");
         char *error2 = "<html>\n<title>\nNet Ninny Error Page 3 for CPSC 441 Assignment 1\n</title>\n\n<body>\n<p>\nSorry, but the Web page that you were trying to access\nis inappropriate for you, based on some of the words it contains.\nThe page has been blocked to avoid insulting your intelligence.\n</p>\n\n<p>\nNet Ninny\n</p>\n\n</body>\n\n</html>\n";
 
-        send_to_client(client_sockfd, error2, 1337, strlen(error2));
+        send_to_client(client_sockfd, error2, 0, strlen(error2));
     }
     else
-        send_to_client(client_sockfd, temp, 1337, chunk_length);
+        send_to_client(client_sockfd, temp, 0, chunk_length);
     free(temp);
     close(server_sockfd);
 }
@@ -289,6 +289,7 @@ void start_server(char *port)
 
         printf("Receieved connection\n"); 
 
+        signal(SIGCHLD, SIG_IGN);
         pid_t child_pid = fork();
         if(!child_pid) 
         {
