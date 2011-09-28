@@ -31,8 +31,10 @@ int http_connect(http_request *req)
 
     if(port == NULL)
     {
+        // set port to default
         port = calloc(3, sizeof(char));
         strncat(port, "80", 2);
+
         LOG(LOG_TRACE, "Using default port\n");
     }
     else
@@ -42,6 +44,7 @@ int http_connect(http_request *req)
 
         // jump over the ':' char
         port++;
+
         LOG(LOG_TRACE, "Using port: %s\n", port);
     }
     
@@ -139,6 +142,12 @@ char *http_read_chunk(int sockfd, ssize_t *length)
         return NULL;
     }
 
+    if(sockfd == -1)
+    {
+        LOG(LOG_ERROR, "The socket given to http_read_chunk is invalid\n");
+        return NULL;
+    }
+
 	char *buf = malloc(sizeof(char));
 	memset(buf, '\0', sizeof(char));
 	char c; 
@@ -148,6 +157,7 @@ char *http_read_chunk(int sockfd, ssize_t *length)
     time_t start = time(NULL);
 
 	ssize_t total_bytes = 0;
+    ssize_t num_bytes = 0;
 
 	while(1)
 	{
@@ -158,7 +168,7 @@ char *http_read_chunk(int sockfd, ssize_t *length)
             break; 
         }
 
-		ssize_t num_bytes = recv(sockfd, &c, 1, 0);
+		num_bytes = recv(sockfd, &c, 1, 0);
 
 		if(num_bytes <= -1) 
 		{
