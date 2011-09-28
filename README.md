@@ -17,11 +17,12 @@ Features
 -------
 
 NetNinny has the following features: 
-Support for both HTTP version 1.0 and 1.1
-Can handle any size of data received from the web server
-Blocks URLs containing forbidden words
-Blocks content containing forbidden words
-Compatible with all major browsers, i.e follows the specification
+
+* Support for both HTTP version 1.0 and 1.1
+* Can handle any size of data received from the web server
+* Blocks URLs containing forbidden words
+* Blocks content containing forbidden words
+* Compatible with all major browsers, i.e follows the specification
 
 Lacks
 -----
