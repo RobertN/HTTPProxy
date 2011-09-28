@@ -62,7 +62,9 @@ void http_request_print(http_request *req)
 
 void http_parse_method(http_request *result, char *line)
 {
-    char *str_part = strtok(line, " ");
+    char *line_copy = strdup(line); 
+    char *str_part = strtok(line_copy, " ");
+
 
     int method, found = 0; 
     for(method = 0; method < http_methods_len; method++)
@@ -80,11 +82,37 @@ void http_parse_method(http_request *result, char *line)
         return; 
     }
 
+    free(line_copy);
+
     // Get the search path from the request
     // (perhaps this should only be done when we
     // get a GET request?)
-    str_part = strtok(NULL, " "); 
+
+    char *p = line; 
+    int state = 0; 
+    while(1)
+    {
+        if(*p == ' ' && state == 0)
+        {
+            // start parsing the host 
+            state = 1; 
+        } else if(*p == '/' && (state == 1 || state == 2))
+        {
+            // read after http://             
+            state++;
+        } else if(*p == '/' && state == 3)
+        {
+            // we have come to the final /
+            break; 
+        }
+
+        p++; 
+    }
+   
+    str_part = strtok(p, " "); 
+    printf("str_part: %s\n", str_part);
     result->search_path = strdup(str_part); 
+
 
     // TODO: Retrieve the HTTP version
     str_part = strtok(NULL, "\r");
@@ -166,7 +194,8 @@ char *http_build_request(http_request *req)
     TAILQ_FOREACH(item, &req->metadata_head, entries) {
         // Remove Connection properties in header in case
         // there are any
-        if(strcmp(item->key, "Connection") == 0)
+        if(strcmp(item->key, "Connection") == 0 || 
+            strcmp(item->key, "Proxy-Connection") == 0)
         {
             continue; 
         }
