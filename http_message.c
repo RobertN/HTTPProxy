@@ -88,6 +88,9 @@ void http_parse_method(http_request *result, char *line)
     // (perhaps this should only be done when we
     // get a GET request?)
 
+    // TODO: This will crash if the browser does not supply the url as:
+    // http://www.url.com/... 
+
     char *p = line; 
     int state = 0; 
     while(1)
