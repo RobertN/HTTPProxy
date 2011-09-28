@@ -168,6 +168,7 @@ void handle_client(int client_sockfd)
     http_request_destroy(req);
 
     LOG(LOG_TRACE, "Beginning to retrieve the response header\n");
+    int is_bad_encoding = 0;
     int is_text_content = 0;
     int line_length;
     while(1)
@@ -188,19 +189,21 @@ void handle_client(int client_sockfd)
             line[18] = '\0'; // Destroys the data in the line, but is needed to check if in coming data will be text format.
             if (strcmp(line, "Content-Type: text") == 0)
                 is_text_content = 1;
+            else if (strcmp(line, "Content-Encoding: ") == 0)
+                is_bad_encoding = 1;
         }
 
-        free(line); 
+        free(line);
     }
 
     LOG(LOG_TRACE, "Beginning to retrieve content\n");
-    ssize_t chunk_length; 
+    ssize_t chunk_length;
     char *temp = http_read_chunk(server_sockfd, &chunk_length);
     LOG(LOG_TRACE, "Received the content, %d bytes\n", (int)chunk_length);
 
-    if (is_text_content && containing_forbidden_words(temp))
+    if (is_text_content && !is_bad_encoding && containing_forbidden_words(temp))
     {
-        LOG(LOG_TRACE, "Received data contains forbidden words!\n"); 
+        LOG(LOG_TRACE, "Received data contains forbidden words!\n");
         char *error2 = "<html>\n<title>\nNet Ninny Error Page 3 for CPSC 441 Assignment 1\n</title>\n\n<body>\n<p>\nSorry, but the Web page that you were trying to access\nis inappropriate for you, based on some of the words it contains.\nThe page has been blocked to avoid insulting your intelligence.\n</p>\n\n<p>\nNet Ninny\n</p>\n\n</body>\n\n</html>\n";
 
         send_to_client(client_sockfd, error2, 1337, strlen(error2));
