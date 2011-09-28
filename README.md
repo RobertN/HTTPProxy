@@ -9,7 +9,7 @@ To build the software, simply unpack the archive and issue “make” in the HTT
 
 It is possible to configure yourself what port the proxy server should use. This can be done by giving the port number as a argument to the executable. For example:
 
-   ./NetNinny 8081
+	./NetNinny 8081
 
 ### Features
 
