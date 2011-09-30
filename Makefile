@@ -1,3 +1,13 @@
+OS = `uname -a`
+
+LFLAGS = 
+
+ifeq ($(OS),Sun)
+	LFLAGS = -lnsl -lsocket -lresolv
+endif
+
 FILES = main.c http_message.c list.c net.c
+
 all:
-	gcc $(FILES) -Wall -g -o NetNinny
+	@echo Building for [$(OS)]
+	gcc $(FILES) -Wall -g -o NetNinny 
