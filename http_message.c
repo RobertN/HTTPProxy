@@ -206,7 +206,7 @@ char *http_build_request(http_request *req)
         size += strlen(item->key) + strlen(": ") + strlen(item->value) + strlen("\r\n");  
         request_buffer = realloc(request_buffer, size);
         strncat(request_buffer, item->key, strlen(item->key)); 
-        strncat(request_buffer, ": ", 3);
+        strncat(request_buffer, ": ", 2);
         strncat(request_buffer, item->value, strlen(item->value));
         strncat(request_buffer, "\r\n", 2);
     }

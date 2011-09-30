@@ -162,7 +162,7 @@ char *http_read_chunk(int sockfd, ssize_t *length)
 	while(1)
 	{
         // check if we should timeout
-        if(time(NULL) - start == timeout)
+        if(time(NULL) - start > timeout)
         {
             LOG(LOG_WARNING, "Request timed out\n");
             break; 

@@ -175,7 +175,7 @@ void handle_client(int client_sockfd)
     {
         line = read_line(server_sockfd);
         line_length = strlen(line);
-        send_to_client(client_sockfd, line, 1, line_length);
+        send_to_client(client_sockfd, line, 0, line_length);
 
         if(line[0] == '\r' && line[1] == '\n')
         {
