@@ -1,5 +1,11 @@
-FILES = main.c http_message.c list.c net.c
+SOURCES := $(shell find . -iname '*.c' )
+OBJECTS := $(SOURCES:.c=.o)
 
-all:
-	gcc $(FILES) -Wall -g -o NetNinny # -lnsl -lsocket -lresolv
+all: http_proxy
 
+http_proxy:	$(OBJECTS)
+	gcc $(OBJECTS) $(LFLAGS) -o http_proxy
+
+.PHONY: clean
+clean:
+	rm $(OBJECTS) http_proxy
