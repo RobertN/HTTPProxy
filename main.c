@@ -18,7 +18,6 @@
 #include "list.h"
 #include "http_message.h"
 
-// TODO: Test all the edge cases
 char *read_line(int sockfd)
 {
     int buffer_size = 2;
@@ -27,25 +26,25 @@ char *read_line(int sockfd)
     int length = 0;
     int counter = 0;
 
-    while(1) 
+    while(1)
     {
-        length = recv(sockfd, &c, 1, 0); 
-        line[counter++] = c; 
+        length = recv(sockfd, &c, 1, 0);
+        line[counter++] = c;
 
         if(c == '\n')
         {
-            line[counter] = '\0'; 
-            return line; 
+            line[counter] = '\0';
+            return line;
         }
 
-        // reallocate the buffer 
+        // reallocate the buffer
         if(counter == buffer_size)
         {
-            buffer_size *= 2; 
+            buffer_size *= 2;
 
             // TODO: should probably allocate +1 for the null terminator,
             // but not sure.
-            line = (char*)realloc(line, sizeof(char)*buffer_size); 
+            line = (char*)realloc(line, sizeof(char)*buffer_size);
         }
 
     }
@@ -83,7 +82,8 @@ int containing_forbidden_words(char str[]){
 int send_to_client(int client_sockfd, char data[], int packages_size, ssize_t length)
 {
     // if packages_size is set to 0, then the function will try to send all data as one package.
-    if(packages_size < 1){
+    if(packages_size < 1)
+		{
         if(send(client_sockfd, data, length, 0) == -1)
         {
             perror("Couldn't send data to the client.");
@@ -118,9 +118,9 @@ int http_request_send(int sockfd, http_request *req)
 {
     LOG(LOG_TRACE, "Requesting: %s\n", req->search_path);
 
-    char *request_buffer = http_build_request(req); 
+    char *request_buffer = http_build_request(req);
 
-    // send the http request to the web server 
+    // send the http request to the web server
     if(send(sockfd, request_buffer, strlen(request_buffer), 0) == -1)
     {
         free(request_buffer);
@@ -216,19 +216,19 @@ void handle_client(int client_sockfd)
 
 void start_server(char *port)
 {
-    printf("Starting server\n"); 
+    printf("Starting server\n");
 
-    int sockfd, new_fd; 
-    struct addrinfo hints, *servinfo, *p; 
-    struct sockaddr_storage their_addr; 
-    socklen_t sin_size; 
-    int rv; 
-    int yes = 1; 
+    int sockfd, new_fd;
+    struct addrinfo hints, *servinfo, *p;
+    struct sockaddr_storage their_addr;
+    socklen_t sin_size;
+    int rv;
+    int yes = 1;
 
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC; 
-    hints.ai_socktype = SOCK_STREAM; 
-    hints.ai_flags = AI_PASSIVE; 
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
 
     if((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0)
     {
@@ -238,67 +238,67 @@ void start_server(char *port)
 
     for(p = servinfo; p != NULL; p = p->ai_next)
     {
-        if((sockfd = socket(p->ai_family, p->ai_socktype, 
-                        p->ai_protocol)) == -1) 
+        if((sockfd = socket(p->ai_family, p->ai_socktype,
+                        p->ai_protocol)) == -1)
         {
-            perror("server: socket"); 
-            continue; 
+            perror("server: socket");
+            continue;
         }
 
-        if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, 
-                    sizeof(int)) == -1) 
+        if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
+                    sizeof(int)) == -1)
         {
-            perror("setsockopt"); 
-            exit(1); 
+            perror("setsockopt");
+            exit(1);
         }
 
-        if(bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) 
+        if(bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
         {
-            close(sockfd); 
-            perror("server: bind"); 
-            continue; 
+            close(sockfd);
+            perror("server: bind");
+            continue;
         }
 
-        break; 
+        break;
     }
 
     if(p == NULL)
     {
-        fprintf(stderr, "server: failed to bind\n"); 
-        return; 
+        fprintf(stderr, "server: failed to bind\n");
+        return;
     }
 
-    freeaddrinfo(servinfo); 
+    freeaddrinfo(servinfo);
 
     if(listen(sockfd, 10) == -1)
     {
-        perror("listen"); 
-        exit(1); 
+        perror("listen");
+        exit(1);
     }
 
-    printf("server: waiting for connections..\n"); 
-    while(1) 
+    printf("server: waiting for connections..\n");
+    while(1)
     {
-        sin_size = sizeof(their_addr); 
-        new_fd = accept(sockfd, (struct sockaddr*)&their_addr, &sin_size); 
+        sin_size = sizeof(their_addr);
+        new_fd = accept(sockfd, (struct sockaddr*)&their_addr, &sin_size);
         if(new_fd == -1)
         {
-            perror("accept"); 
-            continue; 
+            perror("accept");
+            continue;
         }
 
-        printf("Receieved connection\n"); 
+        printf("Receieved connection\n");
 
         signal(SIGCHLD, SIG_IGN);
         pid_t child_pid = fork();
-        if(!child_pid) 
+        if(!child_pid)
         {
-            handle_client(new_fd); 
+            handle_client(new_fd);
 
-            close(new_fd); 
-            exit(0); 
+            close(new_fd);
+            exit(0);
         }
-        close(new_fd); 
+        close(new_fd);
     }
 }
 
@@ -308,6 +308,6 @@ int main(int argc, char *argv[])
     if (argc > 1)
         port = argv[1];
     start_server(port);
-    return 0; 
+    return 0;
 }
 
