@@ -16,7 +16,7 @@ const char *http_methods[] =
     "DELETE", 
     "TRACE", 
     "CONNECT",
-    "UNKNOWN"
+    "INVALID"
 }; 
 
 void http_request_init(http_request **req)
@@ -32,7 +32,6 @@ void http_request_init(http_request **req)
 
 void http_request_destroy(http_request *req)
 {
-    LOG(LOG_TRACE, "http_request_destroy\n");
     free((char*)req->search_path);
 
     struct http_metadata_item *item; 
@@ -46,6 +45,19 @@ void http_request_destroy(http_request *req)
 void http_request_print(http_request *req)
 {
     printf("[HTTP_REQUEST] \n"); 
+
+    switch (req->version) {
+      case HTTP_VERSION_1_0:
+        printf("version:\tHTTP/1.0\n");
+        break;
+      case HTTP_VERSION_1_1:
+        printf("version:\tHTTP/1.1\n");
+        break;
+      case HTTP_VERSION_INVALID:
+        printf("version:\tInvalid\n");
+        break;
+    }
+
     printf("method:\t\t%s\n", 
             http_methods[req->method]);
     printf("path:\t\t%s\n", 
@@ -60,75 +72,62 @@ void http_request_print(http_request *req)
     printf("\n"); 
 }
 
-void http_parse_method(http_request *result, char *line)
+void http_parse_method(http_request* result, const char* line)
 {
-    char *line_copy = strdup(line); 
-    char *str_part = strtok(line_copy, " ");
+    enum parser_states {
+        METHOD,
+        URL,
+        VERSION,
+        DONE
+    };
 
+    char* copy;
+    char* p;
+    copy = p = strdup(line);
+    char* token = NULL;
+    int s = METHOD;
 
-    int method, found = 0; 
-    for(method = 0; method < http_methods_len; method++)
-    {
-        if(strcmp(str_part, http_methods[method]) == 0)
-        {
-            found = 1; 
-            result->method = method;
-            break; 
+    while ((token = strsep(&p, " \r\n")) != NULL) {
+        switch (s) {
+            case METHOD: {
+                int found = 0;
+                for (int i = 0; i < http_methods_len; i++) {
+                    if (strcmp(token, http_methods[i]) == 0) {
+                        found = 1;
+                        result->method = i;
+                        break;
+                    }
+                }
+                if (found == 0) {
+                    result->method = http_methods_len - 1;
+                    free(copy);
+                    return;
+                }
+                s++;
+                break;
+            }
+            case URL:
+              result->search_path = strdup(token);
+              s++;
+              break;
+            case VERSION:
+            {
+              if(strcmp(token, "HTTP/1.0") == 0) {
+                  result->version = HTTP_VERSION_1_0;
+              } else if(strcmp(token, "HTTP/1.1") == 0) {
+                  result->version = HTTP_VERSION_1_1;
+              } else {
+                  result->version = HTTP_VERSION_INVALID;
+              }
+              s++;
+              break;
+            }
+            case DONE:
+              break;
         }
     }
-
-    if(!found)
-    {
-        return; 
-    }
-
-    free(line_copy);
-
-    // Get the search path from the request
-    // (perhaps this should only be done when we
-    // get a GET request?)
-
-    // TODO: This will crash if the browser does not supply the url as:
-    // http://www.url.com/... 
-
-    char *p = line; 
-    int state = 0; 
-    while(1)
-    {
-        if(*p == ' ' && state == 0)
-        {
-            // start parsing the host 
-            state = 1; 
-        } else if(*p == '/' && (state == 1 || state == 2))
-        {
-            // read after http://             
-            state++;
-        } else if(*p == '/' && state == 3)
-        {
-            // we have come to the final /
-            break; 
-        }
-
-        p++; 
-    }
-   
-    str_part = strtok(p, " "); 
-    printf("str_part: %s\n", str_part);
-    result->search_path = strdup(str_part); 
-
-
-    // TODO: Retrieve the HTTP version
-    str_part = strtok(NULL, "\r");
-    if(strcmp(str_part, "HTTP/1.0") == 0)
-    {
-        result->version = HTTP_VERSION_1_0;
-    } else if(strcmp(str_part, "HTTP/1.1") == 0)
-    {
-        result->version = HTTP_VERSION_1_1;
-    } else
-    {
-        LOG(LOG_WARNING, "Unknown HTTP version\n");
-    }
+    free(copy);
+    return;
 }
 
 // Content-Byte: 101

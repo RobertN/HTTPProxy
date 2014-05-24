@@ -9,4 +9,7 @@ void http_parse_method(http_request*, char*);
 void http_parse_metadata(http_request*, char*);
 char *http_build_request(http_request*); 
 
+extern int http_methods_len;
+extern const char* http_methods[];
+
 #endif
